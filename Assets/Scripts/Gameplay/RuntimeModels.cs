@@ -37,6 +37,7 @@ namespace ChainNet.Gameplay
         public List<TrinketData> equippedTrinkets = new();
         public bool isInjured;
         public Injury currentInjury;
+        public bool injuryPenaltyApplied;
 
         public PlayerRuntime(CharacterData character)
         {

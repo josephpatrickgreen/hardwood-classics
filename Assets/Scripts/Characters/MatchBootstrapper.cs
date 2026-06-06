@@ -4,6 +4,7 @@ using ChainNet.Core;
 using ChainNet.Data;
 using ChainNet.Events;
 using ChainNet.Gameplay;
+using ChainNet.Save;
 using UnityEngine;
 
 namespace ChainNet.Characters
@@ -45,6 +46,8 @@ namespace ChainNet.Characters
         private readonly List<PlayerBinding> playerBindings = new();
         private readonly List<PlayerBinding> enemyBindings = new();
 
+        private UnlockTracker unlockTracker;
+
         private void Start()
         {
             var ctx = MatchContext.Instance;
@@ -53,6 +56,9 @@ namespace ChainNet.Characters
                 Debug.LogWarning("MatchBootstrapper: No MatchContext found — using default test setup.");
                 return;
             }
+
+            // Apply injury penalties before the match starts
+            InjurySystem.ApplyInjuryPenalties(ctx.PlayerTeam);
 
             SpawnTeam(ctx.PlayerTeam, playerSpawnRoot, playerSpawnOffsets, playerBindings, true);
             SpawnTeam(ctx.EnemyTeam, enemySpawnRoot, enemySpawnOffsets, enemyBindings, false);
@@ -67,6 +73,54 @@ namespace ChainNet.Characters
 
             if (possessionManager != null)
                 possessionManager.SetInitialPossession(ctx.PlayerTeam);
+
+            // Wire UnlockTracker
+            unlockTracker = FindFirstObjectByType<UnlockTracker>();
+            if (unlockTracker != null)
+            {
+                unlockTracker.ResetMatchCounters();
+                SpecialController.OnSpecialUsed += OnSpecialUsed;
+                FightEventController.OnFightResolved += OnFightResolved;
+                MatchManager.OnMatchEnd += OnMatchEnd;
+            }
+        }
+
+        private void OnDestroy()
+        {
+            if (unlockTracker != null)
+            {
+                SpecialController.OnSpecialUsed -= OnSpecialUsed;
+                FightEventController.OnFightResolved -= OnFightResolved;
+                MatchManager.OnMatchEnd -= OnMatchEnd;
+            }
+        }
+
+        // ── UnlockTracker callbacks ────────────────────────────────────────────
+        private void OnSpecialUsed(PlayerRuntime player)
+        {
+            unlockTracker?.RecordSpecial();
+        }
+
+        private void OnFightResolved(bool playerWon)
+        {
+            if (playerWon) unlockTracker?.RecordFightWon();
+        }
+
+        private void OnMatchEnd(bool playerWon)
+        {
+            if (!playerWon || unlockTracker == null) return;
+
+            var enemyTeamId = MatchContext.Instance?.EnemyTeam?.data?.teamId ?? "";
+
+            // Tick injuries after each completed match
+            var run = RunManager.Instance?.CurrentRun;
+            if (run != null)
+            {
+                foreach (var player in run.playerTeam.players)
+                    InjurySystem.TickInjury(player);
+            }
+
+            unlockTracker.EvaluateUnlocks(enemyTeamId);
         }
 
         private void SpawnTeam(TeamRuntime team, Transform spawnRoot, Vector3[] offsets,

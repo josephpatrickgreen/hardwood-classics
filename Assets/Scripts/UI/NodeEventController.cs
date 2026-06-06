@@ -3,6 +3,7 @@ using ChainNet.Core;
 using ChainNet.Data;
 using ChainNet.Gameplay;
 using ChainNet.RoguelikeMap;
+using ChainNet.Save;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -52,6 +53,9 @@ namespace ChainNet.UI
                     break;
                 case MapNodeType.OpenGym:
                     ShowOpenGym();
+                    break;
+                case MapNodeType.MoneyGame:
+                    ShowMoneyGame();
                     break;
                 case MapNodeType.BarberShop:
                     ShowBarberShop();
@@ -132,7 +136,7 @@ namespace ChainNet.UI
         private void ShowOpenGym()
         {
             SetTitle("Open Gym");
-            SetBody("Rest and recovery. Your team restores stamina.");
+            SetBody("Rest and recovery. Your team restores stamina and treats injuries.");
             var team = RunManager.Instance?.CurrentRun?.playerTeam;
             AddChoice("Rest (+25 Stamina all)",
                 () =>
@@ -142,7 +146,75 @@ namespace ChainNet.UI
                             p.stamina = Mathf.Min(100f, p.stamina + 25f);
                     CloseModal();
                 });
+
+            // Offer injury recovery if anyone is hurt
+            if (team != null)
+            {
+                foreach (var player in team.players)
+                {
+                    if (!player.isInjured) continue;
+                    var capturedPlayer = player;
+                    AddChoice($"Treat {player.data?.displayName ?? "Player"}'s injury",
+                        () =>
+                        {
+                            InjurySystem.ClearInjury(capturedPlayer);
+                            CloseModal();
+                        });
+                }
+            }
+
             AddChoice("Leave", CloseModal);
+        }
+
+        private void ShowMoneyGame()
+        {
+            SetTitle("Money Game");
+            var run = RunManager.Instance?.CurrentRun;
+            var betAmount = 15 + Random.Range(0, 3) * 5; // 15, 20, or 25
+            SetBody($"A side bet is on the table — ${betAmount}. " +
+                    "One of your ballers steps up for a quick shoot-out. Win or lose.");
+
+            if (run == null) { AddChoice("Walk away", CloseModal); return; }
+
+            AddChoice($"Enter the bet (risk ${betAmount})",
+                () =>
+                {
+                    if (run.playerTeam?.players.Count > 0)
+                    {
+                        // Pick the player with highest jumper+nerve as the shooter
+                        var shooter = run.playerTeam.players[0];
+                        foreach (var p in run.playerTeam.players)
+                        {
+                            if (p.currentStats.jumper + p.currentStats.nerve >
+                                shooter.currentStats.jumper + shooter.currentStats.nerve)
+                                shooter = p;
+                        }
+
+                        var chance = 0.35f + shooter.currentStats.jumper * 0.025f +
+                                     shooter.currentStats.nerve * 0.015f;
+                        var won = Random.value <= chance;
+
+                        if (won)
+                        {
+                            run.cash += betAmount * 2;
+                            SetBody($"{shooter.data?.displayName ?? "Your player"} drained it. " +
+                                    $"+${betAmount * 2} cash!");
+                        }
+                        else
+                        {
+                            run.cash = Mathf.Max(0, run.cash - betAmount);
+                            SetBody($"{shooter.data?.displayName ?? "Your player"} bricked it. " +
+                                    $"-${betAmount} cash.");
+                        }
+
+                        SaveManager.Instance?.SaveRun(run);
+                    }
+
+                    ClearChoices();
+                    AddChoice("Continue", CloseModal);
+                });
+
+            AddChoice("Walk away", CloseModal);
         }
 
         private void ShowBarberShop()
