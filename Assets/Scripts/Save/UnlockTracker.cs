@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using ChainNet.Core;
 using ChainNet.Data;
 using ChainNet.Gameplay;
-using ChainNet.Save;
 using UnityEngine;
 
 namespace ChainNet.Save

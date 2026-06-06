@@ -79,20 +79,21 @@ namespace ChainNet.Basketball
             var chance = ShotCalculator.CalculateShotChance(shooter, defenderContest, distancePenalty,
                 hypeBonus, trinketBonus);
 
-            ball.OnShotResolved += (s, made) =>
+            System.Action<PlayerRuntime, bool> shotHandler = null;
+            shotHandler = (s, made) =>
             {
+                ball.OnShotResolved -= shotHandler;
                 if (made)
                 {
                     var distance = hoopTransform != null
-                        ? Vector3.Distance(s.data != null ? hoopTransform.position : Vector3.zero, hoopTransform.position)
+                        ? Vector3.Distance(transform.position, hoopTransform.position)
                         : 0f;
                     var pts = scoreManager != null ? scoreManager.GetPointsForShot(distance) : 1;
                     Score(team, pts);
-                    hypeManager?.AddHype(team, made ? 5f : 0f);
+                    hypeManager?.AddHype(team, 5f);
                 }
-                // Unsubscribe to avoid duplicate calls
-                ball.OnShotResolved -= null;
             };
+            ball.OnShotResolved += shotHandler;
 
             ball.LaunchShot(shooter, chance, hoopTransform != null ? hoopTransform.position : Vector3.up * 3f);
         }
