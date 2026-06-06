@@ -38,6 +38,7 @@ namespace ChainNet.Gameplay
         public bool isInjured;
         public Injury currentInjury;
         public bool injuryPenaltyApplied;
+        public float injuryStaminaLost;
 
         public PlayerRuntime(CharacterData character)
         {

@@ -108,11 +108,7 @@ namespace ChainNet.Characters
 
         private void OnMatchEnd(bool playerWon)
         {
-            if (!playerWon || unlockTracker == null) return;
-
-            var enemyTeamId = MatchContext.Instance?.EnemyTeam?.data?.teamId ?? "";
-
-            // Tick injuries after each completed match
+            // Tick injuries after every completed match, regardless of outcome
             var run = RunManager.Instance?.CurrentRun;
             if (run != null)
             {
@@ -120,6 +116,9 @@ namespace ChainNet.Characters
                     InjurySystem.TickInjury(player);
             }
 
+            if (!playerWon || unlockTracker == null) return;
+
+            var enemyTeamId = MatchContext.Instance?.EnemyTeam?.data?.teamId ?? "";
             unlockTracker.EvaluateUnlocks(enemyTeamId);
         }
 

@@ -247,7 +247,7 @@ namespace ChainNet.UI
         private static bool IsMatchNode(MapNodeType type)
         {
             return type is MapNodeType.PickupGame or MapNodeType.RivalGame or MapNodeType.DirtyCourt
-                or MapNodeType.MoneyGame or MapNodeType.MiniBossCourt or MapNodeType.BossCourt;
+                or MapNodeType.MiniBossCourt or MapNodeType.BossCourt;
         }
 
         private static Color NodeColor(MapNodeType type)

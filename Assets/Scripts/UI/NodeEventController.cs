@@ -166,11 +166,15 @@ namespace ChainNet.UI
             AddChoice("Leave", CloseModal);
         }
 
+        private const int MoneyGameMinBet = 15;
+        private const int MoneyGameBetStep = 5;
+        private const int MoneyGameBetTiers = 3;
+
         private void ShowMoneyGame()
         {
             SetTitle("Money Game");
             var run = RunManager.Instance?.CurrentRun;
-            var betAmount = 15 + Random.Range(0, 3) * 5; // 15, 20, or 25
+            var betAmount = MoneyGameMinBet + Random.Range(0, MoneyGameBetTiers) * MoneyGameBetStep; // 15, 20, or 25
             SetBody($"A side bet is on the table — ${betAmount}. " +
                     "One of your ballers steps up for a quick shoot-out. Win or lose.");
 
@@ -193,18 +197,17 @@ namespace ChainNet.UI
                         var chance = 0.35f + shooter.currentStats.jumper * 0.025f +
                                      shooter.currentStats.nerve * 0.015f;
                         var won = Random.value <= chance;
+                        var shooterName = shooter.data?.displayName ?? "Your player";
 
                         if (won)
                         {
                             run.cash += betAmount * 2;
-                            SetBody($"{shooter.data?.displayName ?? "Your player"} drained it. " +
-                                    $"+${betAmount * 2} cash!");
+                            SetBody($"{shooterName} drained it. +${betAmount * 2} cash!");
                         }
                         else
                         {
                             run.cash = Mathf.Max(0, run.cash - betAmount);
-                            SetBody($"{shooter.data?.displayName ?? "Your player"} bricked it. " +
-                                    $"-${betAmount} cash.");
+                            SetBody($"{shooterName} bricked it. -${betAmount} cash.");
                         }
 
                         SaveManager.Instance?.SaveRun(run);

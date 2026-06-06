@@ -75,7 +75,6 @@ namespace ChainNet.RoguelikeMap
             return type is MapNodeType.PickupGame
                 or MapNodeType.RivalGame
                 or MapNodeType.DirtyCourt
-                or MapNodeType.MoneyGame
                 or MapNodeType.MiniBossCourt
                 or MapNodeType.BossCourt;
         }

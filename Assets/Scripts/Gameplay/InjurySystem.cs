@@ -14,11 +14,11 @@ namespace ChainNet.Gameplay
         private const int InjuryJumperPenalty = 2;
         private const int InjuryFinishPenalty = 2;
         private const int InjuryMotorPenalty = 3;
-        private const int InjuryStaminaPenalty = 30;
+        private const float InjuryStaminaPenalty = 30f;
 
         /// <summary>
         /// Apply stat penalties to every injured player on the team at match start.
-        /// Penalties are subtracted in-place and remembered via a tag on the runtime.
+        /// Penalties are subtracted in-place; injuryPenaltyApplied guards against double-application.
         /// </summary>
         public static void ApplyInjuryPenalties(TeamRuntime team)
         {
@@ -32,6 +32,7 @@ namespace ChainNet.Gameplay
                 player.currentStats.finish = Mathf.Max(0, player.currentStats.finish - InjuryFinishPenalty);
                 player.currentStats.motor = Mathf.Max(0, player.currentStats.motor - InjuryMotorPenalty);
                 player.stamina = Mathf.Max(0f, player.stamina - InjuryStaminaPenalty);
+                player.injuryStaminaLost = InjuryStaminaPenalty;
                 player.injuryPenaltyApplied = true;
 
                 Debug.Log($"[Injury] {player.data?.displayName} is playing hurt — stats reduced.");
@@ -52,6 +53,8 @@ namespace ChainNet.Gameplay
                 player.currentStats.jumper += InjuryJumperPenalty;
                 player.currentStats.finish += InjuryFinishPenalty;
                 player.currentStats.motor += InjuryMotorPenalty;
+                player.stamina = Mathf.Min(100f, player.stamina + player.injuryStaminaLost);
+                player.injuryStaminaLost = 0f;
                 player.injuryPenaltyApplied = false;
             }
 

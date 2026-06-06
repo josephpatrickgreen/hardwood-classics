@@ -29,6 +29,7 @@ namespace ChainNet.RoguelikeMap
             MapNodeType.RivalGame,
             MapNodeType.RivalGame,
             MapNodeType.DirtyCourt,
+            MapNodeType.MoneyGame,
             MapNodeType.Trainer,
             MapNodeType.SneakerShop,
             MapNodeType.TapeDealer,
