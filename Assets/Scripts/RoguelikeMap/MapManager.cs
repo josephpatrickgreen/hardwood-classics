@@ -10,6 +10,7 @@ namespace ChainNet.RoguelikeMap
     public class MapManager : MonoBehaviour
     {
         [SerializeField] private string matchSceneName = "Match";
+        [SerializeField] private CourtData defaultCourt;
 
         private readonly List<MapNodeRuntime> allNodes = new();
 
@@ -22,9 +23,7 @@ namespace ChainNet.RoguelikeMap
         public bool TrySelectNode(MapNodeRuntime node)
         {
             if (node == null || !node.isAvailable || node.isCompleted)
-            {
                 return false;
-            }
 
             ResolveNode(node);
             return true;
@@ -34,26 +33,41 @@ namespace ChainNet.RoguelikeMap
         {
             node.isCompleted = true;
             foreach (var connected in node.connectedNodes)
-            {
                 connected.isAvailable = true;
-            }
 
             if (IsMatchNode(node.nodeType))
-            {
-                SceneManager.LoadScene(matchSceneName);
-            }
+                LaunchMatchForNode(node);
+            else
+                ResolveNonMatchNode(node);
+
+            Save.SaveManager.Instance?.SaveRun(RunManager.Instance?.CurrentRun);
+        }
+
+        private void LaunchMatchForNode(MapNodeRuntime node)
+        {
+            var run = RunManager.Instance?.CurrentRun;
+            if (run == null) return;
+
+            TeamRuntime enemy;
+            if (node.enemyTeam != null)
+                enemy = new TeamRuntime(node.enemyTeam);
             else
             {
-                ResolveNonMatchNode(node);
+                Debug.LogWarning($"Node {node.nodeId} has no enemyTeam assigned — match will use empty team.");
+                enemy = new TeamRuntime(ScriptableObject.CreateInstance<TeamData>());
             }
 
-            Save.SaveManager.Instance?.SaveRun(RunManager.Instance.CurrentRun);
+            var court = node.court ?? defaultCourt;
+            MatchContext.Instance?.PrepareMatch(run.playerTeam, enemy, court, node,
+                node.nodeType == MapNodeType.BossCourt);
+
+            SceneManager.LoadScene(matchSceneName);
         }
 
         private static void ResolveNonMatchNode(MapNodeRuntime node)
         {
-            // Placeholder hooks for prototype UIs: trainer/shop/recruit/event/heal.
             Debug.Log($"Resolved non-match node: {node.nodeType}");
+            // CircuitMapController finds NodeEventController and shows the modal.
         }
 
         private static bool IsMatchNode(MapNodeType type)
