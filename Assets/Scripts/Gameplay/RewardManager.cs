@@ -156,11 +156,14 @@ namespace ChainNet.Gameplay
 
             if (reward.rewardId.StartsWith("stat_upgrade_"))
             {
-                var characterId = reward.rewardId["stat_upgrade_".Length..];
+                const string prefix = "stat_upgrade_";
+                var characterId = reward.rewardId.Length > prefix.Length
+                    ? reward.rewardId[prefix.Length..]
+                    : string.Empty;
                 var amount = reward.xp > 0 ? reward.xp : 2;
                 foreach (var p in run.playerTeam.players)
                 {
-                    if (p.data?.characterId == characterId)
+                    if (!string.IsNullOrEmpty(characterId) && p.data?.characterId == characterId)
                     {
                         p.currentStats.jumper += amount;
                         break;
