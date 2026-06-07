@@ -124,7 +124,8 @@ namespace ChainNet.Gameplay
                 choices.Add(new RewardData
                 {
                     rewardId = $"stat_upgrade_{player.data?.characterId}",
-                    displayName = $"Level up {player.data?.displayName ?? "Player"} (+{amount} Jumper)"
+                    displayName = $"Level up {player.data?.displayName ?? "Player"} (+{amount} Jumper)",
+                    xp = amount  // xp field stores the boost amount for this reward type
                 });
             }
 
@@ -155,8 +156,16 @@ namespace ChainNet.Gameplay
 
             if (reward.rewardId.StartsWith("stat_upgrade_"))
             {
+                var characterId = reward.rewardId["stat_upgrade_".Length..];
+                var amount = reward.xp > 0 ? reward.xp : 2;
                 foreach (var p in run.playerTeam.players)
-                    p.currentStats.jumper += 2;
+                {
+                    if (p.data?.characterId == characterId)
+                    {
+                        p.currentStats.jumper += amount;
+                        break;
+                    }
+                }
             }
         }
 

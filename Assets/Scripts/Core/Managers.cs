@@ -82,9 +82,12 @@ namespace ChainNet.Core
         public static event Action<TeamRuntime, int> OnScore;
         public static event Action<float> OnHeatChanged;
         public static event Action<float> OnHypeChanged;
+        /// <summary>Raised once when the player team's hype first hits 100 during a match.</summary>
+        public static event Action OnMaxHypeReached;
 
         public static void RaiseScore(TeamRuntime team, int points) => OnScore?.Invoke(team, points);
         public static void RaiseHeat(float heat) => OnHeatChanged?.Invoke(heat);
         public static void RaiseHype(float hype) => OnHypeChanged?.Invoke(hype);
+        public static void RaiseMaxHype() => OnMaxHypeReached?.Invoke();
     }
 }

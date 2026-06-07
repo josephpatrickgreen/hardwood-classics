@@ -27,6 +27,7 @@ namespace ChainNet.Characters
         private Transform attackHoop;  // hoop the player is attacking
 
         private CharacterController controller;
+        private FoulWindowManager foulWindowManager;
         private bool dirtyModifierHeld;
         private bool hasBall;
 
@@ -47,6 +48,7 @@ namespace ChainNet.Characters
         private void Awake()
         {
             controller = GetComponent<CharacterController>();
+            foulWindowManager = FindFirstObjectByType<Basketball.FoulWindowManager>();
         }
 
         private void Update()
@@ -136,6 +138,9 @@ namespace ChainNet.Characters
             if (dirtyModifierHeld && dirtyPlayManager != null)
             {
                 var result = dirtyPlayManager.ResolveDirtyPlay(runtime, nearest, false);
+                // Open foul window so the player can immediately call a foul
+                foulWindowManager?.RegisterContact(runtime, nearest, result.heatGenerated / 10f,
+                    true, false);
                 if (result.success)
                     ball?.BecomeLoose(Random.insideUnitSphere * 3f);
             }
@@ -154,8 +159,11 @@ namespace ChainNet.Characters
             var chance = 0.1f + runtime.currentStats.bounce * 0.025f;
             if (Random.value < chance)
             {
+                var shooter = ball.HolderRuntime ?? GetNearestEnemy();
                 ball?.BecomeLoose(Vector3.up * 2f + Random.insideUnitSphere);
                 hypeManager?.AddHype(matchManager.playerTeam, 8f);
+                // Register contact so the shooter can call a foul on the block
+                foulWindowManager?.RegisterContact(runtime, shooter, 0.3f, false, true);
             }
         }
 

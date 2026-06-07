@@ -22,6 +22,7 @@ namespace ChainNet.Save
         public int SpecialsThisMatch { get; private set; }
         public bool CalledFoulThisMatch { get; private set; }
         public bool WonFightThisMatch { get; private set; }
+        public bool MaxHypeReachedThisMatch { get; private set; }
 
         private void Awake()
         {
@@ -35,12 +36,14 @@ namespace ChainNet.Save
             SpecialsThisMatch = 0;
             CalledFoulThisMatch = false;
             WonFightThisMatch = false;
+            MaxHypeReachedThisMatch = false;
         }
 
         public void RecordJumper() => JumpersThisMatch++;
         public void RecordSpecial() => SpecialsThisMatch++;
         public void RecordFoulCalled() => CalledFoulThisMatch = true;
         public void RecordFightWon() => WonFightThisMatch = true;
+        public void RecordMaxHypeReached() => MaxHypeReachedThisMatch = true;
 
         /// <summary>Check all unlock conditions after a won match against the given team.</summary>
         public void EvaluateUnlocks(string defeatedTeamId)
@@ -90,8 +93,19 @@ namespace ChainNet.Save
                 UnlockConditionType.WinWithoutCallingFoul => !CalledFoulThisMatch,
                 UnlockConditionType.WinFightAgainstTeam =>
                     defeatedTeamId == condition.targetId && WonFightThisMatch,
+                UnlockConditionType.WinWithNoInjuries => !AnyPlayerInjured(),
+                UnlockConditionType.ReachMaxHype => MaxHypeReachedThisMatch,
                 _ => false
             };
+        }
+
+        private static bool AnyPlayerInjured()
+        {
+            var run = Core.RunManager.Instance?.CurrentRun;
+            if (run?.playerTeam == null) return false;
+            foreach (var p in run.playerTeam.players)
+                if (p.isInjured) return true;
+            return false;
         }
     }
 }

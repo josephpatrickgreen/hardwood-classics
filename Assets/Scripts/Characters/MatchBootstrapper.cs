@@ -60,6 +60,10 @@ namespace ChainNet.Characters
             // Apply injury penalties before the match starts
             InjurySystem.ApplyInjuryPenalties(ctx.PlayerTeam);
 
+            // Apply team passive bonuses for both sides
+            TeamPassiveSystem.Apply(ctx.PlayerTeam);
+            TeamPassiveSystem.Apply(ctx.EnemyTeam);
+
             SpawnTeam(ctx.PlayerTeam, playerSpawnRoot, playerSpawnOffsets, playerBindings, true);
             SpawnTeam(ctx.EnemyTeam, enemySpawnRoot, enemySpawnOffsets, enemyBindings, false);
 
@@ -82,6 +86,7 @@ namespace ChainNet.Characters
                 SpecialController.OnSpecialUsed += OnSpecialUsed;
                 FightEventController.OnFightResolved += OnFightResolved;
                 MatchManager.OnMatchEnd += OnMatchEnd;
+                UIManager.OnMaxHypeReached += OnMaxHypeReached;
             }
         }
 
@@ -92,6 +97,7 @@ namespace ChainNet.Characters
                 SpecialController.OnSpecialUsed -= OnSpecialUsed;
                 FightEventController.OnFightResolved -= OnFightResolved;
                 MatchManager.OnMatchEnd -= OnMatchEnd;
+                UIManager.OnMaxHypeReached -= OnMaxHypeReached;
             }
         }
 
@@ -104,6 +110,11 @@ namespace ChainNet.Characters
         private void OnFightResolved(bool playerWon)
         {
             if (playerWon) unlockTracker?.RecordFightWon();
+        }
+
+        private void OnMaxHypeReached()
+        {
+            unlockTracker?.RecordMaxHypeReached();
         }
 
         private void OnMatchEnd(bool playerWon)

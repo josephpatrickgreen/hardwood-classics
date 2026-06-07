@@ -15,9 +15,16 @@ namespace ChainNet.Events
         {
             if (team == null) return;
             if (RunManager.Instance?.CurrentRun?.playerTeam == team)
+            {
+                var wasBelow = playerHype < 100f;
                 playerHype += amount;
+                if (wasBelow && playerHype >= 100f)
+                    UIManager.RaiseMaxHype();
+            }
             else
+            {
                 enemyHype += amount;
+            }
 
             UIManager.RaiseHype(GetCurrentHype(team));
         }
