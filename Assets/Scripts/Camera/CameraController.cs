@@ -1,3 +1,9 @@
+using System.Collections;
+using ChainNet.Basketball;
+using ChainNet.Characters;
+using ChainNet.Core;
+using ChainNet.Events;
+using ChainNet.Gameplay;
 using UnityEngine;
 
 namespace ChainNet.Camera
@@ -6,6 +12,7 @@ namespace ChainNet.Camera
     /// NBA Jam-style side/diagonal arcade camera.
     /// Tracks ball and active player action with shake on impact.
     /// Full court is always visible through soft-tracking and zoom.
+    /// Subscribes to gameplay events to trigger ZoomIn/ZoomOut/TriggerImpact automatically.
     /// </summary>
     public class CameraController : MonoBehaviour
     {
@@ -26,6 +33,7 @@ namespace ChainNet.Camera
         [SerializeField] private float normalFOV = 60f;
         [SerializeField] private float actionFOV = 52f;    // zoom in on dunks/specials
         [SerializeField] private float fovLerpSpeed = 3f;
+        [SerializeField] private float zoomInDuration = 1.5f;  // seconds before returning to normal
         private float targetFOV;
 
         [Header("Shake")]
@@ -39,6 +47,22 @@ namespace ChainNet.Camera
         {
             cam = GetComponent<UnityEngine.Camera>();
             targetFOV = normalFOV;
+        }
+
+        private void OnEnable()
+        {
+            SpecialController.OnSpecialUsed += OnSpecialUsed;
+            FightEventController.OnFightResolved += OnFightResolved;
+            MatchManager.OnScore += OnScore;
+            UIManager.OnMaxHypeReached += OnMaxHypeReached;
+        }
+
+        private void OnDisable()
+        {
+            SpecialController.OnSpecialUsed -= OnSpecialUsed;
+            FightEventController.OnFightResolved -= OnFightResolved;
+            MatchManager.OnScore -= OnScore;
+            UIManager.OnMaxHypeReached -= OnMaxHypeReached;
         }
 
         public void SetTarget(Transform target) => followTarget = target;
@@ -67,6 +91,36 @@ namespace ChainNet.Camera
             }
         }
 
+        // ── Game event handlers ───────────────────────────────────────────────
+
+        private void OnSpecialUsed(PlayerRuntime _)
+        {
+            StopAllCoroutines();
+            ZoomIn();
+            StartCoroutine(ZoomOutAfterDelay(zoomInDuration));
+            TriggerImpact(0.6f);
+        }
+
+        private void OnFightResolved(bool _)
+        {
+            TriggerImpact(2f);
+            StopAllCoroutines();
+            ZoomIn();
+            StartCoroutine(ZoomOutAfterDelay(zoomInDuration));
+        }
+
+        private void OnScore(TeamRuntime _) => TriggerImpact(0.4f);
+
+        private void OnMaxHypeReached()
+        {
+            TriggerImpact(1f);
+            StopAllCoroutines();
+            ZoomIn();
+            StartCoroutine(ZoomOutAfterDelay(zoomInDuration));
+        }
+
+        // ── Public API ────────────────────────────────────────────────────────
+
         /// <summary>Trigger camera shake (dunks, specials, hard fouls).</summary>
         public void TriggerImpact(float intensity = 1f)
         {
@@ -78,5 +132,12 @@ namespace ChainNet.Camera
 
         /// <summary>Return to normal FOV.</summary>
         public void ZoomOut() => targetFOV = normalFOV;
+
+        // ── Helpers ───────────────────────────────────────────────────────────
+        private IEnumerator ZoomOutAfterDelay(float delay)
+        {
+            yield return new WaitForSeconds(delay);
+            ZoomOut();
+        }
     }
 }

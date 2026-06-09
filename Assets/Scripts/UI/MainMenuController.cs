@@ -5,11 +5,18 @@ namespace ChainNet.UI
 {
     public class MainMenuController : MonoBehaviour
     {
+        [SerializeField] private CollectionController collectionController;
+        [SerializeField] private OptionsController optionsController;
+
         private TeamSelectController teamSelect;
 
         private void Awake()
         {
             teamSelect = FindFirstObjectByType<TeamSelectController>();
+            if (collectionController == null)
+                collectionController = FindFirstObjectByType<CollectionController>();
+            if (optionsController == null)
+                optionsController = FindFirstObjectByType<OptionsController>();
         }
 
         /// <summary>
@@ -24,8 +31,9 @@ namespace ChainNet.UI
                 GameManager.Instance?.StartRun();
         }
 
-        public void OpenCollection() { }
-        public void OpenOptions() { }
+        public void OpenCollection() => collectionController?.Show();
+        public void OpenOptions()    => optionsController?.Show();
+
         public void Quit()
         {
             Application.Quit();

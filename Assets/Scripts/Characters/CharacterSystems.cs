@@ -245,6 +245,8 @@ namespace ChainNet.Characters
             }
         }
 
+        private void Update() => TickCooldowns(Time.deltaTime);
+
         public void ReduceCooldown(PlayerRuntime player, float amount)
         {
             if (!cooldowns.TryGetValue(player, out _)) return;
