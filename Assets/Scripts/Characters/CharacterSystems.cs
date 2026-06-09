@@ -219,6 +219,8 @@ namespace ChainNet.Characters
 
         private readonly Dictionary<PlayerRuntime, float> cooldowns = new();
 
+        private void Update() => TickCooldowns(Time.deltaTime);
+
         public bool CanUseSpecial(PlayerRuntime player)
         {
             if (player?.data?.special == null) return false;
@@ -244,8 +246,6 @@ namespace ChainNet.Characters
                 player.specialCooldownRemaining = cooldowns[player];
             }
         }
-
-        private void Update() => TickCooldowns(Time.deltaTime);
 
         public void ReduceCooldown(PlayerRuntime player, float amount)
         {
